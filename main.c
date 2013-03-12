@@ -12,17 +12,23 @@
 #define DOWN_KEY 80
 #define ENTER_KEY 13
 
+#define STUDENTS_PER_PAGE 15
+
 int SELECTOR = 0;
-
-char getSelector(int id){
-	return ( (SELECTOR == id) ? 'x' : ' ');
-}
-
 int STATE = 0;
-int index = 0;
-char *CLASSES[80] = {"ComE 321", "ComE 322", "Come 323"};
-char *STUDENTS[80] = {"Carlo Sarile", "Neil David", "Eric Tampos"};
+int SIZE = 0;
+int INDEX = 0;
+int INPUT = 0;
+int CURRENT_STUDENT = 0;
 
+/*temp*/
+char *CLASSES[80] = {"ComE 321", "ComE 322", "Come 323"};
+char *STUDENTS[80] = {"Carlo Sarile", "Neil David", "Eric Tampos", "Four", "Five", "Sixe", "seven", "eight", "nine", "ten", "11", "12", "13", "14", "15"};
+
+char *MENU_OPTIONS[80] = {"Select a Class", "Add a new Class", "Delete a Class", "Exit"};
+char *STUDENT_OPTIONS[80] = {"Add a new student", "Find a student", "Sort list", "Next list", "Previous list", "Menu"};
+
+char *CURRENT_CLASS = "";
 
 typedef struct Student{
 	int id;
@@ -34,65 +40,67 @@ typedef struct Student{
 	int grade;
 }student;
 
-int getInput(int min, int max){
-	int input = getch();
-	input = input - 48;
-	if((input >= min) && (input <= max)){
-		return input;
-	}else{
-		printf("\nInvalid input! Try again: ");
-		return getInput(min, max);
-	}
 
+char isSelected(int id){ return ( (SELECTOR == id) ? 'O' : ' '); }
+
+int cycleInput(){
+	INPUT = getch();	
+	if(INPUT == UP_KEY)		SELECTOR = (SELECTOR <= 0) ? (SIZE-1) : (SELECTOR - 1); 
+	else if(INPUT == DOWN_KEY)	SELECTOR = (SELECTOR + 1) % SIZE; 
+
+	return (INPUT == ENTER_KEY) ? ENTER_KEY : -1;
 }
 
-void showMenu(){
-	printf("Welcome\n");
-	printf("[1] Select a Class\n");
-	printf("[2] Add a new Class\n");
-	printf("[3] Delete a Class\n");
-	printf("[4] Exit\n");
-	printf("What would you like to do: ");
-	handleMenu(getInput(1, 4));
-}
-
-void handleMenu(int option){
-	switch(option){
-		case 1: STATE = SELECT_CLASS; 	break;	
-		case 2: STATE = ADD_CLASS; 	break;	
-		case 3: STATE = DELETE_CLASS; 	break;	
-		case 4: STATE = EXIT;		break;	
+void showMainMenu(){
+	SIZE = 4;
+	system("cls");
+	printf("Welcome (Navigate using the arrow keys, press enter to select)\n");
+	for(INDEX = 0; INDEX < SIZE; INDEX++){
+		printf("[%c] %s\n", isSelected(INDEX), MENU_OPTIONS[INDEX]);
 	}
 }
 
-/*unfinished*/
+void handleMainMenu(){
+	do{
+		showMainMenu();
+	}while(cycleInput() != ENTER_KEY);
+
+	switch(SELECTOR){
+		case 0: STATE = SELECT_CLASS; 	break;	
+		case 1: STATE = ADD_CLASS; 	break;	
+		case 2: STATE = DELETE_CLASS; 	break;	
+		case 3: STATE = EXIT;		break;	
+	}
+}
+
 void showClassList(){
-	for(index = 0; index < 3; index++){
-		printf("[%d] %s\n", index + 1, CLASSES[index]);
+	for(INDEX = 0; INDEX < 3; INDEX++){
+		printf("[%c] %s\n", isSelected(INDEX), CLASSES[INDEX]);
 	}
-		
 }
 
 void showSelectClass(){
+	SIZE = 4;
+	system("cls");
 	printf("Select a Class\n");
 	showClassList();
-	printf("[4] Menu\n");
-	printf("What would you like to do: ");
-	handleSelectClass(getInput(1, 4));
+	printf("[%c] %s\n", isSelected(SIZE - 1), "Menu");
 }
 
-/*unfinished*/
-void handleSelectClass(int option){
-	if(option == 4){
+void handleSelectClass(){
+	do{
+		showSelectClass();
+	}while(cycleInput() != ENTER_KEY);
+
+	if(SELECTOR == SIZE-1){
 		STATE = MENU;
 	}else{
-		selectClass(option);
+		CURRENT_CLASS =  CLASSES[SELECTOR];		
 		STATE = SELECT_STUDENT;
 	}
 }
 
-/*unfinished*/
-void showAddClass(){
+void handleAddClass(){ //incomplete
 	printf("Enter class name (ESC to cancel): ");
 	char name[100];
 	scanf ("%[^\n]%*c", name);
@@ -102,52 +110,81 @@ void showAddClass(){
 	getch();
 }
 
-/*unfinished*/
 void showDeleteClass(){
+	SIZE = 4;
+	system("cls");
 	printf("Select a Class you want to delete:\n");
 	showClassList();
-	printf("[4] Cancel\n");
-	printf("Choice: ");
-	handleSelectClass(getInput(1, 4));
+	printf("[%c] %s\n", isSelected(SIZE - 1), "Cancel");
 }
 
-void selectClass(int class_id){
-	printf("\nYou selected class: %s\n", CLASSES[class_id-1]);
+void handleDeleteClass(){//incomplete
+	do{
+		showDeleteClass();
+	}while(cycleInput() != ENTER_KEY);
+
+	if(SELECTOR == 3){
+		STATE = MENU;
+	}else{
+		printf("selected class: %s", CLASSES[SELECTOR]);		
+	}
 }
 
-void showStudentList(){
-	for(index = 0; index < 3; index++){
-		printf("[%d] %s\n", index + 1, STUDENTS[index]);
+void showStudentList(int start, int end){
+	for(INDEX = start; INDEX < end; INDEX++){
+		printf("[%c] %s\n", isSelected(INDEX), STUDENTS[INDEX]);
 	}
 }
 
 void showSelectStudent(){
-	printf("Select a Student: (Showing %d to %d)\n", 1, 5);
-	showStudentList();
-	printf("[5] Add a new student\n");
-	printf("[6] Find a student\n");
-	printf("[7] Sort list\n");
-	printf("[8] Next List\n");
-	printf("[9] Previous List\n");
-	printf("[0] Menu\n");
-	printf("What would you like to do: ");
-	handleSelectClass(getInput(1, 4));
+	SIZE = 6 + STUDENTS_PER_PAGE;
+	system("cls");
+	printf("Class: %s\nSelect a Student: (Showing %d to %d)\n", 
+		CURRENT_CLASS, CURRENT_STUDENT, (CURRENT_STUDENT + STUDENTS_PER_PAGE)-1);
+	showStudentList(CURRENT_STUDENT, STUDENTS_PER_PAGE);
+	printf("\nSelect an option: \n");
+	for(INDEX = 0; INDEX < 6; INDEX++){
+		printf("[%c] %s\n", isSelected(INDEX + STUDENTS_PER_PAGE), STUDENT_OPTIONS[INDEX]);
+	}
+}
+
+void handleSelectStudent(){
+	do{
+		showSelectStudent();
+	}while(cycleInput() != ENTER_KEY);
+
+	if(SELECTOR == SIZE - 1){//menu
+		STATE = MENU;
+	}else if(SELECTOR == SIZE - 2){//prev
+		printf("prev");
+	}else if(SELECTOR == SIZE - 3){//next
+		printf("next");
+	}else if(SELECTOR == SIZE - 4){//sort
+		printf("sort");
+	}else if(SELECTOR == SIZE - 5){//find
+		printf("find");
+	}else if(SELECTOR == SIZE - 6){//add
+		printf("add");
+	}else{
+		printf("selected student: %s", STUDENTS[SELECTOR]);		
+	}
+
 }
 
 void handleState(){
+	SELECTOR = 0;
 	system("cls");
 	switch(STATE){
-		case MENU:		showMenu(); 		break;
-		case SELECT_CLASS: 	showSelectClass(); 	break;
-		case ADD_CLASS: 	showAddClass(); 	break;
-		case DELETE_CLASS: 	showDeleteClass(); 	break;
-		case SELECT_STUDENT: 	showSelectStudent(); 	break;
+		case MENU:		handleMainMenu(); 		break;
+		case SELECT_CLASS: 	handleSelectClass(); 		break;
+		case ADD_CLASS: 	handleAddClass(); 		break;
+		case DELETE_CLASS: 	handleDeleteClass(); 		break;
+		case SELECT_STUDENT: 	handleSelectStudent(); 		break;
 		case EXIT: 		printf("Goodbye!\n"); exit(0); break;
 	}
 	handleState();	
 }
 int main(){
-	int index = 0;
 	handleState();
 	getch();
 	return 0;
