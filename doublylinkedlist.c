@@ -1,45 +1,52 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-#define UP_KEY 107
-#define DOWN_KEY 106 
-#define ENTER_KEY 111
-
-int selector = 0;
-int isRunning = 1;
+typedef struct{
+     int id;
+     char *first_name;
+     char *last_name;
+     int quizzes;
+     int hw;
+     int attendance;
+     int final_exam;
+     int grade;
+}Student;
 
 typedef struct node{
-     int data;
+     void* data;
      struct node *next;
      struct node *prev;
 }Node;
 
-void insert(Node *pointer, int data) {
-     /* Iterate through the list till we encounter the last Node.*/
+typedef struct class{
+     int id;
+     char *name;
+     Node *students;
+}Class;
+
+
+void insert(Node *pointer, void* data) {
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
      }
-     /* Allocate memory for the new Node and put data in it.*/
      pointer->next = (Node *)malloc(sizeof(Node));
      (pointer->next)->prev = pointer;
      pointer = pointer->next;
      pointer->data = data;
      pointer->next = NULL;
 }
-int find(Node *pointer, int key) {
-     pointer =  pointer -> next; //First Node is dummy Node.
-     /* Iterate through the entire linked list and search for the key. */
+
+void* find(Node *pointer, void* key) {
+     pointer =  pointer -> next; 
      while(pointer!=NULL) {
-          if(pointer->data == key){ //key is found. 
-               return 1;
+          if(pointer->data == key){ 
+               return pointer->data;
           }
-          pointer = pointer -> next;//Search in the next Node.
+          pointer = pointer -> next;
      }
-     /*Key is not found */
-     return 0;
+     return NULL;
 }
-void delete(Node *pointer, int data) {
-     /* Go to the Node for which the Node next to it has to be deleted */
+void delete(Node *pointer, void* data) {
      while(pointer->next!=NULL && (pointer->next)->data != data) {
           pointer = pointer -> next;
      }
@@ -47,17 +54,11 @@ void delete(Node *pointer, int data) {
           printf("Element %d is not present in the list\n",data);
           return;
      }
-     /* Now pointer points to a Node and the Node next to it has to be removed */
      Node *temp;
      temp = pointer -> next;
-     /*temp points to the Node which has to be removed*/
      pointer->next = temp->next;
      temp->prev =  pointer;
-     /*We removed the Node which is next to the pointer (which is also temp) */
      free(temp);
-     /* Beacuse we deleted the Node, we no longer require the memory used for it . 
-        free() will deallocate the memory.
-      */
      return;
 }
 
@@ -70,95 +71,7 @@ int getSize(Node *pointer){
      return count;
 }
 
-/*PRINT LIST ---for debugging */
-void print(Node *pointer) {
-     if(pointer==NULL) {
-          printf("Empty\n");
-          return;
-     }
-     printf("%d ",pointer->data);
-     print(pointer->next);
-}
-
-/*for GUI*/
-char getSelector(int id){
-	return ( (selector == id) ? 'x' : ' ');
-}
-void showOptions(){
-	system("cls");
-	printf("Use the 'j' for down, 'k' for up and 'o' to select:\n");
-	printf("[%c] Add\n", getSelector(0));
-	printf("[%c] Edit\n", getSelector(1));
-	printf("[%c] View\n", getSelector(2));
-	printf("[%c] Delete\n", getSelector(3));
-	printf("[%c] Find\n", getSelector(4));
-	printf("[%c] Exit\n", getSelector(5));
-}
-
-void handleInput(int size){
-	int in = 0;
-	do{
-		showOptions();
-		in = getch();	
-		if(in == UP_KEY)	selector = (selector <= 0) ? (size-1) : (selector - 1); 
-		else if(in == DOWN_KEY)	selector = (selector + 1) % size; 
-	}while(in != ENTER_KEY);
-}
-
-
-int main() {
-     int data;
-     /* start always points to the first Node of the linked list.
-        temp is used to point to the last Node of the linked list.*/
-     Node *head,*tail;
-     head = (Node *)malloc(sizeof(Node)); 
-     tail = head;
-     tail -> next = NULL;
-     tail -> prev = NULL;
-
-     do{
-          handleInput(6);
-          printf("\nCurrent size of list: %d\n", getSize(head));
-
-          switch(selector){
-               case 0:
-                    printf("Enter data: ");
-                    scanf("%d",&data);
-                    insert(head,data);
-                    printf("\nData added.");
-                    free(data);
-                    break;
-               case 1: printf("e"); break;
-               case 2: 
-                    printf("The list is ");
-                    print(head->next);
-                    printf("\n");
-                    break;
-               case 3: 
-                    printf("Select data to delete: ");
-                    scanf("%d",&data);
-                    delete(head,data);
-                    printf("\nData removed.");
-                    free(data);
-                    break;
-               case 4:
-                    printf("Enter data to find: ");
-                    scanf("%d",&data);
-                    int status = find(head,data);
-                    /*if(status) {
-                         printf("Element Found\n");
-                    } else {
-                         printf("Element Not Found\n");
-                    }
-*/
-                    free(data);
-                    break;
-     
-               case 5: printf("Exiting program...\n");isRunning = 0; break;
-          }
-          getch();
-     }while(isRunning);
+int main(){
 
      return 0;
 }
-
