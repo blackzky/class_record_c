@@ -34,7 +34,8 @@ char *STUDENT_OPTIONS[80] = {"Add a new student", "Find a student", "Sort list",
 
 char *CURRENT_CLASS = "";
 
-/* Student (Struct)*/ typedef struct{
+/* Student (Struct)*/ 
+typedef struct{
      int id;
      char first_name[100];
      char last_name[100];
@@ -51,14 +52,15 @@ char *CURRENT_CLASS = "";
 
 /* Node */
 typedef struct node{
-     void* data;
+     Student data;
      struct node *next;
      struct node *prev;
 }Node;
 
 Node *students;
+int ID = 0;
 
-void insert(Node *pointer, void* data) {
+void insert(Node *pointer, Student data) {
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
      }
@@ -66,22 +68,24 @@ void insert(Node *pointer, void* data) {
      (pointer->next)->prev = pointer;
      pointer = pointer->next;
      pointer->data = data;
+     pointer->data.id = ID++;
      pointer->next = NULL;
 }
 
-void* find(Node *pointer, void* key) {
+Student find(Node *pointer, Student key) {
+     Student s;
      pointer =  pointer -> next; 
      while(pointer!=NULL) {
-          if(pointer->data == key){ 
+          if(pointer->data.id == key.id){ 
                return pointer->data;
           }
           pointer = pointer -> next;
      }
-     return NULL;
+     return s;
 }
 
-void delete(Node *pointer, void* data) {
-     while(pointer->next!=NULL && (pointer->next)->data != data) {
+void delete(Node *pointer, Student data) {
+     while(pointer->next!=NULL && (pointer->next)->data.id != data.id) {
           pointer = pointer -> next;
      }
      if(pointer->next==NULL) {
@@ -103,6 +107,20 @@ int getSize(Node *pointer){
           count++;
      }
      return count;
+}
+
+void printStudent(Student s){
+     printf("id: %d, firstname: %s, last_name %s\n", s.id, s.first_name, s.last_name);
+
+}
+
+void printStudentList(Node *pointer) {
+     if(pointer==NULL) {
+          if(getSize(pointer) < 1) printf("Empty\n");
+          return;
+     }
+     printStudent(pointer->data);
+     printStudentList(pointer->next);
 }
 
 /* END OF DOUBLY LINKED LIST */
@@ -208,7 +226,8 @@ void showSelectStudent(){
 	system("cls");
 	printf("Class: %s\nSelect a Student: (Showing %d to %d)\n", 
 		CURRENT_CLASS, CURRENT_STUDENT, (CURRENT_STUDENT + STUDENTS_PER_PAGE)-1);
-	showStudentList(CURRENT_STUDENT, STUDENTS_PER_PAGE);
+	//showStudentList(CURRENT_STUDENT, STUDENTS_PER_PAGE);
+     printStudentList(students); //temp
 	printf("\nSelect an option: \n");
 	for(INDEX = 0; INDEX < 6; INDEX++){
 		printf("[%c] %s\n", isSelected(INDEX + STUDENTS_PER_PAGE), STUDENT_OPTIONS[INDEX]);
@@ -285,8 +304,9 @@ void handleSelectStudent(){
 		printf("add");
           student = createStudent();
           printStudentInfo(student);
-          getch();
+          insert(students, student);
 		STATE = SELECT_STUDENT;
+          getch();
 	}else{
 		printf("selected student: %s", STUDENTS[SELECTOR]);		
 	}
