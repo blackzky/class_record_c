@@ -25,6 +25,15 @@ void validNumber(){
 
 }
 
+void ok(){
+     char str[]="1776ad6";
+     int year;
+     if (isdigit(str[0])) {
+          year = atoi (str);
+          printf ("The year that followed %d was %d.\n",year,year+1);
+     }
+}
+
 int isNumber(char str[]){
      int i = 0;
      do{
@@ -35,13 +44,13 @@ int isNumber(char str[]){
      return 1;
 }
 
-void ok(){
-     char str[]="1776ad6";
-     int year;
-     if (isdigit(str[0])) {
-          year = atoi (str);
-          printf ("The year that followed %d was %d.\n",year,year+1);
-     }
+int getNumber(char *msg){
+     char input[80];
+     do{
+          printf("%s", msg);
+     }while(!isNumber(input));
+     return (atoi(input));     
+
 }
 
 int main(){

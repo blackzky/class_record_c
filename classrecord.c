@@ -2,7 +2,7 @@
 #include <string.h>
 
 /*------------------------------------------------------------------------------------*/
-/* START VARIABLE DECLARATIONS -------------------------------------------------------*/
+/*------------------------------ START VARIABLE DECLARATIONS -------------------------*/
 #define UP_KEY 72
 #define DOWN_KEY 80
 #define LEFT_KEY 75 
@@ -20,8 +20,8 @@ char *STUDENT_MENU[80] = {"View all students", "Add a student", "Edit a student"
 
 typedef struct student{
      int id;
-     char first_name[80];
-     char last_name[80];
+     char firstname[80];
+     char lastname[80];
      int quiz;
      int hw;
      int attendance;
@@ -36,30 +36,35 @@ typedef struct node{
 }Node;
 
 Node *students;
-
-/* END VARIABLE DECLARATIONS ---------------------------------------------------------*/
+/*------------------------------- END VARIABLE DECLARATIONS --------------------------*/
 /*------------------------------------------------------------------------------------*/
-/* START FUNCTION DECLARATIONS -------------------------------------------------------*/
+/*------------------------------ START FUNCTION DECLARATIONS -------------------------*/
 //helpers: ------------------------------------------------
 char *getSelector(int id);
 int cycleInput(int size);
 void displayOptions(char *options[], int start, int end);
+int isNumber(char str[]);
+int getNumber(char *msg);
 
 //student module: -----------------------------------------
 void	showStudentOptions(int size);
 void handleStudentMenuInput();
 void printStudent(Student s, int select_id);
 Student createStudent();
+int computeGrade(Student s);
 
 //doubly linked list module:-------------------------------
-void initNode(Node *head);
+Node *createNode();
 void addStudent(Node *pointer, Student data); 
 Student findStudent(Node *pointer, int key); 
 void deleteStudent(Node *pointer, int id); 
 int getSize(Node *pointer);
-/* END FUNCTION DECLARATIONS ---------------------------------------------------------*/
+
+//state module: -------------------------------------------
+void handleState();
+/*------------------------------- END FUNCTION DECLARATIONS --------------------------*/
 /*------------------------------------------------------------------------------------*/
-/* START HELPERS FUNCTONS ------------------------------------------------------------*/
+/*-------------------------------- START HELPERS FUNCTONS ----------------------------*/
 char *getSelector(int id){ return ( (SELECTOR == id) ? ">>" : "  "); }
 
 int cycleInput(int size){
@@ -77,17 +82,35 @@ void displayOptions(char *options[], int start, int end){
           printf("\t\t\t   %s %s\n", getSelector(i), options[i]);
      }
 }
-/* END HELPERS FUNCTIONS -------------------------------------------------------------*/
+
+int isNumber(char str[]){
+     int i = 0;
+     do{
+          if(!isdigit(str[i++])){
+               return 0;
+          }
+     }while(i < strlen(str));
+     return 1;
+}
+
+int getNumber(char *msg){
+     char input[] = "0";
+     do{
+          if(!isNumber(input)) printf("(Incorrect input! Please try again)\n");
+          printf("%s", msg);
+          gets(input);
+     }while(!isNumber(input));
+     return (atoi(input));     
+}
+/*--------------------------------- END HELPERS FUNCTIONS ----------------------------*/
 /*------------------------------------------------------------------------------------*/
-/* START DOUBLY LINKEDLIST FUNCTIONS -------------------------------------------------*/
-void initNode(Node *student){
-     Node *tail;
-     Student s = {-1, "", "", 0, 0, 0, 0, 0};
-     student = (Node *)malloc(sizeof(Node)); 
-     tail = student;
+/*---------------------------- START DOUBLY LINKEDLIST FUNCTIONS ---------------------*/
+Node *createNode(){
+     Node *head, *tail;
+     head = (Node *)malloc(sizeof(Node)); 
+     tail = head;
      tail->next = NULL;
      tail->prev = NULL;
-     student->data = s;
 }
 void addStudent(Node *pointer, Student data) {
      while(pointer->next!=NULL) {
@@ -96,6 +119,8 @@ void addStudent(Node *pointer, Student data) {
      pointer->next = (Node *)malloc(sizeof(Node));
      (pointer->next)->prev = pointer;
      pointer = pointer->next;
+     data.id = ID++;
+     data.grade = computeGrade(data);
      pointer->data = data;
      pointer->next = NULL;
 }
@@ -137,9 +162,10 @@ int getSize(Node *pointer){
      }
      return count;
 }
-/* END DOUBLY LINKEDLIST FUNCTIONS ---------------------------------------------------*/
+/*----------------------------- END DOUBLY LINKEDLIST FUNCTIONS ----------------------*/
 /*------------------------------------------------------------------------------------*/
 
+/*------------------------------- STUDENT MODULE (START) -----------------------------*/
 /* Menu (Students) */
 void	showStudentOptions(int size){
      int  start = 0,
@@ -149,11 +175,13 @@ void	showStudentOptions(int size){
 	printf("\t   (Use the arrow keys to navigate and press enter to select)\n\n");
      displayOptions(STUDENT_MENU, start, end);
 }
+
+/* Print a student, select_id is for the id of the student in the list */
 void printStudent(Student s, int select_id){
      printf("\n   %s", getSelector(select_id));
      printf("\t[ID: %d]", s.id);
-     printf("\n\tName: %s", s.first_name);
-     printf(" %s", s.last_name);
+     printf("\n\tName: %s", s.firstname);
+     printf(" %s", s.lastname);
      printf("\n\tScores: %d", s.quiz);
      printf(" %d", s.hw);
      printf(" %d", s.attendance);
@@ -161,47 +189,68 @@ void printStudent(Student s, int select_id){
      printf("\n\tGrade: %d\n\n", s.grade);
 }
 
+/* (INCOMPLETE)Create a student based from the input of the user. */
 Student createStudent(){
      char input[80];
      Student s; 
-     gets(input);
-     puts(input);
+     system("cls");
+     printf("\nCreate a new student: \n\n");
+     printf("Enter firstname: ");
+     gets(s.firstname);
+     printf("Enter lastname: ");
+     gets(s.lastname);
+
+     s.quiz = getNumber("Enter score in quizzes: ");
+     s.attendance = getNumber("Enter attendance: ");
+     s.hw = getNumber("Enter score Homework/Seatwork: ");
+     s.final_exam = getNumber("Enter score in final exam: ");
      return s;     
 }
 
+/* Print the list of all students */
 void printStudentList(Node *pointer){
      int size = getSize(students); 
      int i = 0;
-     printf("\n\t\t\t\tList of students:");
+     printf("\n\n\t\t\t\tList of students:");
      if(size == 0){
-          printf("\n\n\t\t\t\tThe list is empty.\n");
+          printf("\n\n\t\t\t\tThe list is empty\n");
+          printf("\n\n\t\t\t    (Press enter to continue)\n");
      }else{
           while(pointer->next!=NULL) {
                pointer = pointer -> next;
                printStudent(pointer->data, i++);
           }
      }
-
 }
-/* Input handler (Students) */
+
+/* (INCOMPLETE)Input handler (Students) */
 void handleStudentMenuInput(){
      int size  = 5;
-     Student temp = {5, "Gadi", "Galindo", 1, 2, 3, 4, 5};
+     Student temp;
      do{ showStudentOptions(size); }while(cycleInput(size)!= ENTER_KEY);
 
      switch(SELECTOR){
-          case 0: 
+          case 0: /* View all students*/
                do{  
                     system("cls");
                     printStudentList(students);
                }while(cycleInput(getSize(students)) != ENTER_KEY);
                break;
           case 1:
+                  temp = createStudent(); 
                   addStudent(students, temp);
+                  printf("\nStudent added.\n");
+                  SELECTOR = 0;
                   break;
           case 4: printf("\nGoodbye..\n"); STATE = EXIT; break;
      }
 }
+
+int computeGrade(Student s){
+     return (s.quiz + s.attendance + s.hw + s.final_exam);
+}
+/*-------------------------------- STUDENT MODULE (END) ------------------------------*/
+
 /* State handler */
 void handleState(){
      do{
@@ -213,16 +262,14 @@ void handleState(){
 }
 
 int main(){
-     //initNode(students); 
-     Node *tail;
-     Student s = {-1, "", "", 0, 0, 0, 0, 0};
-     students = (Node *)malloc(sizeof(Node)); 
-     tail = students;
-     tail->next = NULL;
-     tail->prev = NULL;
-     students->data = s;
+     students = createNode();
+     //load students from file..
+     //get last id based from the list of all students loaded
+     //set id to last id
+     //...code here..
 
      handleState();
+
 	getch();
 	return 0;
 }
