@@ -8,15 +8,18 @@
 #define LEFT_KEY 75 
 #define RIGHT_KEY 77
 #define ENTER_KEY 13
+#define ESC_KEY 27
 
 #define STUDENT_MENU_STATE 1
 #define EXIT -1
 
 int SELECTOR = 0,
     ID = 0,
+    CURRENT_STUDENT = 0,
     STATE = STUDENT_MENU_STATE;
 
-char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Edit a student", "Delete a student", "Exit"};
+char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Exit"};
+char *SELECT_STUDENT_OPTIONS[80] = {"View", "Edit", "Delete", "Cancel"};
 
 typedef struct student{
      int id;
@@ -41,6 +44,7 @@ Node *students, *searchResults;
 /*------------------------------ START FUNCTION DECLARATIONS -------------------------*/
 //helpers: ------------------------------------------------
 char *getSelector(int id);
+char *getSelectorAndStudentID(int id, int student_id);
 int cycleInput(int size);
 void displayOptions(char *options[], int start, int end);
 int isNumber(char str[]);
@@ -67,13 +71,21 @@ void handleState();
 /*------------------------------------------------------------------------------------*/
 /*-------------------------------- START HELPERS FUNCTONS ----------------------------*/
 char *getSelector(int id){ return ( (SELECTOR == id) ? ">>" : "  "); }
+char *getSelectorAndStudentID(int id, int student_id){
+     if(SELECTOR == id){
+          CURRENT_STUDENT = student_id;
+          return ">>";
+     }else{
+          return "  ";
+     }
+}
 
 int cycleInput(int size){
 	int INPUT = getch();	
      if(size > 0){
           if(INPUT == UP_KEY)		SELECTOR = (SELECTOR <= 0) ? (size-1) : (SELECTOR - 1); 
           else if(INPUT == DOWN_KEY)	SELECTOR = (SELECTOR + 1) % size; 
-     }
+     } else if(INPUT == ESC_KEY) return INPUT;
 	return (INPUT == ENTER_KEY) ? ENTER_KEY : -1;
 }
 
@@ -191,7 +203,7 @@ void	showStudentOptions(int size){
 
 /* Print a student, select_id is for the id of the student in the list */
 void printStudent(Student s, int select_id){
-     printf("\n   %s", getSelector(select_id));
+     printf("\n   %s", getSelectorAndStudentID(select_id, s.id));
      printf("\t[ID: %d]", s.id);
      printf("\n\tName: %s", s.firstname);
      printf(" %s", s.lastname);
@@ -238,17 +250,33 @@ void printStudentList(Node *pointer){
 
 /* (INCOMPLETE)Input handler (Students) */
 void handleStudentMenuInput(){
-     int size  = 6;
+     int size  = 4;
      char input[80];
      Student temp;
      do{ showStudentOptions(size); }while(cycleInput(size)!= ENTER_KEY);
 
      switch(SELECTOR){
           case 0: /* View all students*/
-               do{  
-                    system("cls");
-                    printStudentList(students);
-               }while(cycleInput(getSize(students)) != ENTER_KEY);
+               /* show the list of students and allow user to select them */
+               do{  system("cls"); printStudentList(students); }while(cycleInput(getSize(students)) != ENTER_KEY);
+
+               SELECTOR = 0;
+
+               if(getSize(students) > 0){
+                    /* show options if user selects a student */
+                    do{  system("cls"); printf("\n\nStudent ID: %d", CURRENT_STUDENT); printf("\n\nWhat would you like to do?\n"); displayOptions(SELECT_STUDENT_OPTIONS, 0, 4); }while(cycleInput(4) != ENTER_KEY);
+                    
+                    /* proccess the option the user selected */
+                    switch(SELECTOR){
+                         case 0: printf("view");break;
+                         case 1: printf("edit");break;
+                         case 2: printf("deleite");break;
+                         case 3: printf("cancel");break;
+                    }
+                    getch();
+
+               }
+               SELECTOR = 0;
                break;
           case 1: /* find student */
                system("cls");
@@ -259,15 +287,17 @@ void handleStudentMenuInput(){
                system("cls");
                printf("\nStudents found: %d\n", (getSize(searchResults) > 0 ? getSize(searchResults) : 0));
                printStudentList(searchResults);
+               SELECTOR = 0;
                getch();
                break;
           case 2: /* add student */
                temp = createStudent(); 
                addStudent(students, temp);
-               printf("\nStudent added.\n");
+               printf("\nStudent %s was added to the list. (Press any key to continue)\n", temp.firstname);
                SELECTOR = 0;
+               getch();
                break;
-          case 5: printf("\nGoodbye..\n"); STATE = EXIT; break;
+          case 3: printf("\nGoodbye..\n"); STATE = EXIT; break;
      }
 }
 
