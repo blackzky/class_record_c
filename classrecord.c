@@ -20,6 +20,7 @@ int SELECTOR = 0,
 
 char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Exit"};
 char *SELECT_STUDENT_OPTIONS[80] = {"View", "Edit", "Delete", "Cancel"};
+char *EDIT_STUDENT_OPTIONS[80] = {"Firstname", "Lastname", "Quiz", "Homework/Seatwork", "Attendance", "Final exam", "Cancel"};
 
 typedef struct student{
      int id;
@@ -62,6 +63,7 @@ void handleFindStudent();
 void handleViewAllStudents();
 void showSelectedStudentOptions();
 void handleDeleteStudent();
+void handleEditStudent();
 
 //doubly linked list module:-------------------------------
 Node *createNode();
@@ -71,7 +73,7 @@ void findStudent(Node *pointer, char key[]);
 void deleteStudent(Node *pointer, int id); 
 int getSize(Node *pointer);
 Student getStudent(Node *pointer,int id);
-
+void editStudent(Node *pointer, int id, void* newData, int selector);
 //state module: -------------------------------------------
 void handleState();
 /*------------------------------- END FUNCTION DECLARATIONS --------------------------*/
@@ -192,6 +194,25 @@ void deleteStudent(Node *pointer, int id) {
      free(temp);
      return;
 }
+void editStudent(Node *pointer, int id, void* newData, int selector){
+     pointer =  pointer -> next; 
+     while(pointer!=NULL) {
+          if(pointer->data.id == id){ 
+               switch(selector){
+                    case 0: strcpy(pointer->data.firstname, (char *)newData); break;
+                    case 1: strcpy(pointer->data.lastname, (char *)newData); break;
+                    case 2: pointer->data.quiz = newData; break;
+                    case 3: pointer->data.hw = newData; break;
+                    case 4: pointer->data.attendance = newData; break;
+                    case 5: pointer->data.final_exam = newData; break;
+               }
+               pointer->data.grade = computeGrade(pointer->data);
+               break;
+          }
+          pointer = pointer -> next;
+     }
+}
+
 int getSize(Node *pointer){
      int count = 0;
      while(pointer->next!=NULL) {
@@ -305,6 +326,28 @@ void handleDeleteStudent(){
      }
      STATE = STUDENT_MENU_STATE;
 }
+void handleEditStudent(){
+     Student s = getStudent(students, CURRENT_STUDENT);
+     int size = 7;
+     char input[80];
+     SELECTOR = 0;
+     do{
+          system("cls");
+          printf("\n\n\t\t\tStudent: %s %s", s.firstname, s.lastname);
+          printf("\n\n\t\t\tWhat data would you like to edit?\n\n");
+          displayOptions(EDIT_STUDENT_OPTIONS, 0, size);
+     }while(cycleInput(size) != ENTER_KEY);
+     
+     switch(SELECTOR){
+          case 0: printf("Edit firstname: "); gets(input); editStudent(students, CURRENT_STUDENT, input, SELECTOR); break;
+          case 1: printf("Edit lastname: "); gets(input); editStudent(students, CURRENT_STUDENT, input, SELECTOR); break;
+          case 2: editStudent(students, CURRENT_STUDENT, getNumber("Edit quiz score: "), SELECTOR);break;
+          case 3: editStudent(students, CURRENT_STUDENT, getNumber("Edit homework score: "), SELECTOR);break;
+          case 4: editStudent(students, CURRENT_STUDENT, getNumber("Edit attendance: "), SELECTOR);break;
+          case 5: editStudent(students, CURRENT_STUDENT, getNumber("Edit final exam score: "), SELECTOR);break;
+          case 6: STATE = STUDENT_MENU_STATE; break;
+     }
+}
 void handleViewAllStudents(){
      /* show the list of students and allow user to select them */
      do{  system("cls"); printStudentList(students); }while(cycleInput(getSize(students)) != ENTER_KEY);
@@ -318,13 +361,12 @@ void handleViewAllStudents(){
           /* proccess the option the user selected */
           switch(SELECTOR){
                case 0: printStudent(getStudent(students, CURRENT_STUDENT)); getch();break;
-               case 1: printf("edit"); getch();break;
+               case 1: handleEditStudent(); break;
                case 2: handleDeleteStudent(); break;
                case 3: STATE = STUDENT_MENU_STATE; break;
           }
      }
 }
-
 void handleStudentMenuInput(){
      int size  = 4;
      /* show the student options until the user press enter */
