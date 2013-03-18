@@ -11,16 +11,20 @@
 #define ESC_KEY 27
 
 #define STUDENT_MENU_STATE 1
+#define CLASS_MENU_STATE 2
 #define EXIT -1
 
 int SELECTOR = 0,
     ID = 0,
+    classID = 0,
     CURRENT_STUDENT = 0,
-    STATE = STUDENT_MENU_STATE;
+    CURRENT_CLASS = 0,
+    STATE = CLASS_MENU_STATE;
 
-char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Exit"};
+char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Menu"};
 char *SELECT_STUDENT_OPTIONS[80] = {"View", "Edit", "Delete", "Cancel"};
 char *EDIT_STUDENT_OPTIONS[80] = {"Firstname", "Lastname", "Quiz", "Homework/Seatwork", "Attendance", "Final exam", "Cancel"};
+char *CLASS_MENU[80] = {"View all class", "Add a class", "Exit"};
 
 typedef struct student{
      int id;
@@ -39,7 +43,20 @@ typedef struct node{
      struct node *prev;
 }StudentNode;
 
+typedef struct class{
+     int id;
+     char name[80];
+     StudentNode *students;
+}Class;
+
+typedef struct cNode{
+     Class data;
+     struct cNode *next;
+     struct cNode *prev;
+}ClassNode;
+
 StudentNode *students, *searchResults;
+ClassNode *classes;
 /*------------------------------- VARIABLE DECLARATIONS (END) ------------------------*/
 /*------------------------------------------------------------------------------------*/
 /*------------------------------------------------------------------------------------*/
@@ -47,6 +64,7 @@ StudentNode *students, *searchResults;
 //helpers: ------------------------------------------------
 char *getSelector(int id);
 char *getSelectorAndStudentID(int id, int student_id);
+char *getSelectorAndClassID(int id, int class_id);
 int cycleInput(int size);
 void displayOptions(char *options[], int start, int end);
 int isNumber(char str[]);
@@ -66,6 +84,14 @@ void showSelectedStudentOptions();
 void handleDeleteStudent();
 void handleEditStudent();
 
+//class module:--------------------------------------------
+void printClassForTable(Class c, int select_id);
+void handleViewAllClass();
+void printClassList(ClassNode *pointer);
+void handleAddClass();
+void	showClassOptions(int size);
+void handleClassMenuInput();
+
 //doubly linked list module:-------------------------------
 StudentNode *createStudentNode();
 void addStudent(StudentNode *pointer, Student data); 
@@ -75,6 +101,11 @@ void deleteStudent(StudentNode *pointer, int id);
 int getSize(StudentNode *pointer);
 Student getStudent(StudentNode *pointer,int id);
 void editStudent(StudentNode *pointer, int id, void* newData, int selector);
+
+ClassNode *createClassNode();
+void addClass(ClassNode *pointer, Class data);
+int getClassSize(ClassNode *pointer);
+
 //state module: -------------------------------------------
 void handleState();
 /*------------------------------- FUNCTION DECLARATIONS (END) ------------------------*/
@@ -85,6 +116,14 @@ char *getSelector(int id){ return ( (SELECTOR == id) ? ">>" : "  "); }
 char *getSelectorAndStudentID(int id, int student_id){
      if(SELECTOR == id){
           CURRENT_STUDENT = student_id;
+          return ">>";
+     }else{
+          return "  ";
+     }
+}
+char *getSelectorAndClassID(int id, int class_id){
+     if(SELECTOR == id){
+          CURRENT_CLASS = class_id;
           return ">>";
      }else{
           return "  ";
@@ -216,6 +255,34 @@ void editStudent(StudentNode *pointer, int id, void* newData, int selector){
      }
 }
 int getSize(StudentNode *pointer){
+     int count = 0;
+     while(pointer->next!=NULL) {
+          pointer = pointer -> next;
+          count++;
+     }
+     return count;
+}
+
+ClassNode *createClassNode(){
+     ClassNode *head, *tail;
+     head = (ClassNode *)malloc(sizeof(ClassNode)); 
+     tail = head;
+     tail->next = NULL;
+     tail->prev = NULL;
+     return head;
+}
+void addClass(ClassNode *pointer, Class data) {
+     while(pointer->next!=NULL) {
+          pointer = pointer -> next;
+     }
+     pointer->next = (ClassNode *)malloc(sizeof(StudentNode));
+     (pointer->next)->prev = pointer;
+     pointer = pointer->next;
+     data.id = classID++;
+     pointer->data = data;
+     pointer->next = NULL;
+}
+int getClassSize(ClassNode *pointer){
      int count = 0;
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
@@ -372,7 +439,7 @@ void handleStudentMenuInput(){
           case 0: handleViewAllStudents(); break;
           case 1: handleFindStudent(); getch(); break;
           case 2: handleAddStudent(); getch(); break;
-          case 3: printf("\nGoodbye..\n"); STATE = EXIT; break;
+          case 3: STATE = CLASS_MENU_STATE; break;
      }
      SELECTOR = 0;
 }
@@ -380,6 +447,62 @@ int computeGrade(Student s){ return (s.quiz + s.attendance + s.hw + s.final_exam
 /*-------------------------------- STUDENT MODULE (END) ------------------------------*/
 /*------------------------------------------------------------------------------------*/
 /*-------------------------------- CLASS MODULE (START) ------------------------------*/
+
+void printClassForTable(Class c, int select_id){
+     printf("\n\t %s %s", getSelectorAndClassID(select_id, c.id), c.name);
+}
+void handleViewAllClass(){
+     do{  system("cls"); printClassList(classes); }while(cycleInput(getClassSize(classes)) != ENTER_KEY);
+     printf("current class: %d", CURRENT_CLASS);getch();
+}
+
+void printClassList(ClassNode *pointer){
+     int size = getClassSize(classes); 
+     int i = 0;
+     printf("\n\n\t\t\t\tList of class:");
+     if(size == 0){
+          printf("\n\t\t\t\tThe list is empty\n");
+          printf("\n\t\t\t    (Press enter to continue)\n");
+     }else{
+          while(pointer->next!=NULL) {
+               pointer = pointer -> next;
+               printClassForTable(pointer->data, i++);
+          }
+     }
+}
+void handleAddClass(){
+     char input[80];
+     Class c;
+
+     system("cls");
+     printf("\n\n\t\t\t\tAdd Class\n\n");
+     printf("Classname: ");
+     gets(c.name);
+     addClass(classes, c);
+     
+     printf("\nClass %s was added. (Press enter to continue)", c.name);
+     getch();
+}
+void	showClassOptions(int size){
+     int  start = 0,
+          end = size;
+	system("cls");
+     printf("\n\t\t\t\tClass Record\n\n");
+	printf("\t   (Use the arrow keys to navigate and press enter to select)\n\n");
+     displayOptions(CLASS_MENU, start, end);
+}
+void handleClassMenuInput(){
+     int size = 3;
+     do{ showClassOptions(size); }while(cycleInput(size)!= ENTER_KEY);
+
+     /* process the selected option of the user */
+     switch(SELECTOR){
+          case 0: handleViewAllClass(); break;
+          case 1: handleAddClass(); break;
+          case 2: STATE = EXIT;  break;
+     }
+     SELECTOR = 0;
+}
 
 /*-------------------------------- CLASS MODULE (END) ------------------------------*/
 /*------------------------------------------------------------------------------------*/
@@ -389,6 +512,7 @@ void handleState(){
      do{
           switch(STATE){
                case STUDENT_MENU_STATE: handleStudentMenuInput(); break;
+               case CLASS_MENU_STATE: handleClassMenuInput(); break;
                case EXIT: exit(0); break;
           }
      }while(STATE != EXIT);
@@ -398,15 +522,14 @@ void handleState(){
 int main(){
      students = createStudentNode();
      searchResults = createStudentNode();
+     classes = createClassNode();
      //load students from file..
      //get last id based from the list of all students loaded
      //set id to last id
      //...code here..
-
      handleState();
 
      free(students);
      free(searchResults);
-	getch();
 	return 0;
 }
