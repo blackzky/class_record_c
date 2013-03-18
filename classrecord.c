@@ -55,6 +55,7 @@ typedef struct cNode{
      struct cNode *prev;
 }ClassNode;
 
+
 StudentNode *students, *searchResults;
 ClassNode *classes;
 /*------------------------------- VARIABLE DECLARATIONS (END) ------------------------*/
@@ -282,6 +283,20 @@ void addClass(ClassNode *pointer, Class data) {
      pointer->data = data;
      pointer->next = NULL;
 }
+Class getClass(ClassNode *pointer, int id){
+     Class temp;
+     temp.id = -1;
+     strcpy(temp.name,"");
+     temp.students = createStudentNode();
+     pointer =  pointer -> next; 
+     while(pointer!=NULL) {
+          if((pointer->data.id == id)){ 
+               return pointer->data;
+          }
+          pointer = pointer -> next;
+     }
+     return temp;
+}
 int getClassSize(ClassNode *pointer){
      int count = 0;
      while(pointer->next!=NULL) {
@@ -448,12 +463,18 @@ int computeGrade(Student s){ return (s.quiz + s.attendance + s.hw + s.final_exam
 /*------------------------------------------------------------------------------------*/
 /*-------------------------------- CLASS MODULE (START) ------------------------------*/
 
+//to get the current student list use: getClass(classes, CURRENT_CLASS).students
 void printClassForTable(Class c, int select_id){
      printf("\n\t %s %s", getSelectorAndClassID(select_id, c.id), c.name);
 }
 void handleViewAllClass(){
+     int size = getClassSize(classes); 
+     char n[80];
      do{  system("cls"); printClassList(classes); }while(cycleInput(getClassSize(classes)) != ENTER_KEY);
-     printf("current class: %d", CURRENT_CLASS);getch();
+     if(size > 0){
+          students = getClass(classes, CURRENT_CLASS).students;
+          STATE = STUDENT_MENU_STATE;
+     }
 }
 
 void printClassList(ClassNode *pointer){
@@ -478,6 +499,7 @@ void handleAddClass(){
      printf("\n\n\t\t\t\tAdd Class\n\n");
      printf("Classname: ");
      gets(c.name);
+     c.students = createStudentNode();
      addClass(classes, c);
      
      printf("\nClass %s was added. (Press enter to continue)", c.name);
@@ -495,7 +517,6 @@ void handleClassMenuInput(){
      int size = 3;
      do{ showClassOptions(size); }while(cycleInput(size)!= ENTER_KEY);
 
-     /* process the selected option of the user */
      switch(SELECTOR){
           case 0: handleViewAllClass(); break;
           case 1: handleAddClass(); break;
