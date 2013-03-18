@@ -20,12 +20,20 @@ int SELECTOR = 0,
     classID = 0,
     CURRENT_STUDENT = 0,
     CURRENT_CLASS = 0,
+    STUDENTS_PER_PAGE = 15,
+     CURRENT_PAGE = 0;
     STATE = CLASS_MENU_STATE;
 
 char *STUDENT_MENU[80] = {"View all students", "Find a student", "Add a student", "Menu"};
 char *SELECT_STUDENT_OPTIONS[80] = {"View", "Edit", "Delete", "Cancel"};
 char *EDIT_STUDENT_OPTIONS[80] = {"Firstname", "Lastname", "Quiz", "Homework/Seatwork", "Attendance", "Final exam", "Cancel"};
 char *CLASS_MENU[80] = {"View all class", "Add a class", "Exit"};
+
+//dummy data
+char *temp_classes[80] = {"ComE321", "Reed31", "ComE324"};
+char *temp_fname[80] = {"Juan", "Manuel", "John" };
+char *temp_lname[80] = {"De La Cruz", "Lopez", "Doe" };
+
 
 typedef struct student{
      int id;
@@ -152,6 +160,8 @@ int cycleInput(int size){
      if(size > 0){
           if(INPUT == UP_KEY)		SELECTOR = (SELECTOR <= 0) ? (size-1) : (SELECTOR - 1); 
           else if(INPUT == DOWN_KEY)	SELECTOR = (SELECTOR + 1) % size; 
+          else if(INPUT == LEFT_KEY)	CURRENT_PAGE = (CURRENT_PAGE <= 0) ? ((getSize(students)/STUDENTS_PER_PAGE)-1) : (CURRENT_PAGE - 1); 
+          else if(INPUT == RIGHT_KEY)	CURRENT_PAGE = (CURRENT_PAGE + 1) % (getSize(students)/STUDENTS_PER_PAGE); 
           else if(INPUT == ESC_KEY) return INPUT;
           else if(INPUT == DEL_KEY) return INPUT;
      }else if(INPUT == ESC_KEY) return INPUT; 
@@ -396,6 +406,8 @@ Student createStudent(){
 void printStudentList(StudentNode *pointer){
      int size = getSize(students); 
      int i = 0;
+     int start = CURRENT_PAGE * STUDENTS_PER_PAGE;
+     int counter = 0;
      printf("\n");
      printInCenter("Class Record >> Student List");
      printf("\n");
@@ -403,10 +415,15 @@ void printStudentList(StudentNode *pointer){
           printInCenter("The list is empty");
           printInCenter("(Press enter or esc to continue)");
      }else{
+          printf("\nShowing page %d out of %d page/s", CURRENT_PAGE+1, getSize(students)/STUDENTS_PER_PAGE);
           while(pointer->next!=NULL) {
                pointer = pointer -> next;
-               printStudentForTable(pointer->data, i++);
+               counter++;
+               if(counter > start) printStudentForTable(pointer->data, i++);
+               if(counter > (CURRENT_PAGE + STUDENTS_PER_PAGE)) break;
           }
+          printf("\n\n");
+          printInCenter("(Press left arrow to show previous list and right arrow for next list)");
      }
 }
 void handleAddStudent(){
@@ -483,7 +500,8 @@ void handleEditStudent(){
 }
 void handleViewAllStudents(){
      /* show the list of students and allow user to select them */
-     do{  system("cls"); printStudentList(students); }while(cycleInput(getSize(students)) != ENTER_KEY);
+     int size = (getSize(students) >STUDENTS_PER_PAGE ) ? STUDENTS_PER_PAGE+1 : getSize(students);
+     do{  system("cls"); printStudentList(students); }while(cycleInput(size) != ENTER_KEY);
 
      SELECTOR = 0;
 
@@ -615,6 +633,32 @@ void handleClassMenuInput(){
 /*-------------------------------- CLASS MODULE (END) ------------------------------*/
 /*------------------------------------------------------------------------------------*/
 
+void populateData(){
+     int i, j;
+     char strnum[80];
+     int number_of_students = 3;
+     Class temp;
+     Student tempS;
+     for(i = 0; i < 3; i++){
+          strcpy(temp.name, temp_classes[i]);
+          temp.students = createStudentNode();
+          addClass(classes, temp);
+          students = getClass(classes, i).students;
+          for(j = 0; j < 60 ;j++){
+               strcpy(tempS.firstname, temp_fname[(j+1)%number_of_students]);
+               sprintf(strnum, "%d", j);
+               strcat(tempS.firstname, strnum);
+               strcpy(tempS.lastname, temp_lname[(j+1)%number_of_students]);
+               tempS.quiz = 1;
+               tempS.hw = 1;
+               tempS.attendance = 1;
+               tempS.final_exam = 1;
+               addStudent(students, tempS);
+          }
+     }
+     
+}
+
 /* State handler */
 void handleState(){
      do{
@@ -631,13 +675,10 @@ int main(){
      students = createStudentNode();
      searchResults = createStudentNode();
      classes = createClassNode();
-     //load students from file..
-     //get last id based from the list of all students loaded
-     //set id to last id
-     //...code here..
-     handleState();
 
-     free(students);
-     free(searchResults);
+     populateData(); /* add temp data */
+
+     handleState();
 	return 0;
 }
+
