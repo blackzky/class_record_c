@@ -2,7 +2,7 @@
 #include <string.h>
 
 /*------------------------------------------------------------------------------------*/
-/*------------------------------ START VARIABLE DECLARATIONS -------------------------*/
+/*------------------------------ VARIABLE DECLARATIONS (START) -----------------------*/
 #define UP_KEY 72
 #define DOWN_KEY 80
 #define LEFT_KEY 75 
@@ -37,12 +37,13 @@ typedef struct node{
      Student data;
      struct node *next;
      struct node *prev;
-}Node;
+}StudentNode;
 
-Node *students, *searchResults;
-/*------------------------------- END VARIABLE DECLARATIONS --------------------------*/
+StudentNode *students, *searchResults;
+/*------------------------------- VARIABLE DECLARATIONS (END) ------------------------*/
 /*------------------------------------------------------------------------------------*/
-/*------------------------------ START FUNCTION DECLARATIONS -------------------------*/
+/*------------------------------------------------------------------------------------*/
+/*------------------------------ FUNCTION DECLARATIONS (START) -----------------------*/
 //helpers: ------------------------------------------------
 char *getSelector(int id);
 char *getSelectorAndStudentID(int id, int student_id);
@@ -66,19 +67,20 @@ void handleDeleteStudent();
 void handleEditStudent();
 
 //doubly linked list module:-------------------------------
-Node *createNode();
-void addStudent(Node *pointer, Student data); 
-void addSearchResult(Node *pointer, Student data);
-void findStudent(Node *pointer, char key[]); 
-void deleteStudent(Node *pointer, int id); 
-int getSize(Node *pointer);
-Student getStudent(Node *pointer,int id);
-void editStudent(Node *pointer, int id, void* newData, int selector);
+StudentNode *createStudentNode();
+void addStudent(StudentNode *pointer, Student data); 
+void addSearchResult(StudentNode *pointer, Student data);
+void findStudent(StudentNode *pointer, char key[]); 
+void deleteStudent(StudentNode *pointer, int id); 
+int getSize(StudentNode *pointer);
+Student getStudent(StudentNode *pointer,int id);
+void editStudent(StudentNode *pointer, int id, void* newData, int selector);
 //state module: -------------------------------------------
 void handleState();
-/*------------------------------- END FUNCTION DECLARATIONS --------------------------*/
+/*------------------------------- FUNCTION DECLARATIONS (END) ------------------------*/
 /*------------------------------------------------------------------------------------*/
-/*-------------------------------- START HELPERS FUNCTONS ----------------------------*/
+/*------------------------------------------------------------------------------------*/
+/*-------------------------------- HELPERS FUNCTONS (START) --------------------------*/
 char *getSelector(int id){ return ( (SELECTOR == id) ? ">>" : "  "); }
 char *getSelectorAndStudentID(int id, int student_id){
      if(SELECTOR == id){
@@ -124,23 +126,24 @@ int getNumber(char *msg){
      }while(!isNumber(input));
      return (atoi(input));     
 }
-/*--------------------------------- END HELPERS FUNCTIONS ----------------------------*/
+/*--------------------------------- HELPERS FUNCTIONS (END) --------------------------*/
 /*------------------------------------------------------------------------------------*/
-/*---------------------------- START DOUBLY LINKEDLIST FUNCTIONS ---------------------*/
+/*------------------------------------------------------------------------------------*/
+/*---------------------------- DOUBLY LINKEDLIST FUNCTIONS (START) -------------------*/
 
-Node *createNode(){
-     Node *head, *tail;
-     head = (Node *)malloc(sizeof(Node)); 
+StudentNode *createStudentNode(){
+     StudentNode *head, *tail;
+     head = (StudentNode *)malloc(sizeof(StudentNode)); 
      tail = head;
      tail->next = NULL;
      tail->prev = NULL;
      return head;
 }
-void addStudent(Node *pointer, Student data) {
+void addStudent(StudentNode *pointer, Student data) {
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
      }
-     pointer->next = (Node *)malloc(sizeof(Node));
+     pointer->next = (StudentNode *)malloc(sizeof(StudentNode));
      (pointer->next)->prev = pointer;
      pointer = pointer->next;
      data.id = ID++;
@@ -148,19 +151,19 @@ void addStudent(Node *pointer, Student data) {
      pointer->data = data;
      pointer->next = NULL;
 }
-void addSearchResult(Node *pointer, Student data) {
+void addSearchResult(StudentNode *pointer, Student data) {
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
      }
-     pointer->next = (Node *)malloc(sizeof(Node));
+     pointer->next = (StudentNode *)malloc(sizeof(StudentNode));
      (pointer->next)->prev = pointer;
      pointer = pointer->next;
      pointer->data = data;
      pointer->next = NULL;
 }
-void findStudent(Node *pointer, char key[]) {
+void findStudent(StudentNode *pointer, char key[]) {
      pointer =  pointer -> next; 
-     searchResults = createNode();
+     searchResults = createStudentNode();
      while(pointer!=NULL) {
           if((strcasecmp(pointer->data.firstname, key) == 0) || (strcasecmp(pointer->data.lastname, key) == 0)){ 
                addSearchResult(searchResults, pointer->data);
@@ -168,7 +171,7 @@ void findStudent(Node *pointer, char key[]) {
           pointer = pointer -> next;
      }
 }
-Student getStudent(Node *pointer, int id){
+Student getStudent(StudentNode *pointer, int id){
      Student temp = {-1, "", "", 1, 1, 1, 1, 1};
      pointer =  pointer -> next; 
      while(pointer!=NULL) {
@@ -179,7 +182,7 @@ Student getStudent(Node *pointer, int id){
      }
      return temp;
 }
-void deleteStudent(Node *pointer, int id) {
+void deleteStudent(StudentNode *pointer, int id) {
      while(pointer->next!=NULL && (pointer->next)->data.id != id) {
           pointer = pointer -> next;
      }
@@ -187,14 +190,14 @@ void deleteStudent(Node *pointer, int id) {
           printf("Student is not present in the list\n");
           return;
      }
-     Node *temp;
+     StudentNode *temp;
      temp = pointer -> next;
      pointer->next = temp->next;
      temp->prev =  pointer;
      free(temp);
      return;
 }
-void editStudent(Node *pointer, int id, void* newData, int selector){
+void editStudent(StudentNode *pointer, int id, void* newData, int selector){
      pointer =  pointer -> next; 
      while(pointer!=NULL) {
           if(pointer->data.id == id){ 
@@ -212,8 +215,7 @@ void editStudent(Node *pointer, int id, void* newData, int selector){
           pointer = pointer -> next;
      }
 }
-
-int getSize(Node *pointer){
+int getSize(StudentNode *pointer){
      int count = 0;
      while(pointer->next!=NULL) {
           pointer = pointer -> next;
@@ -222,9 +224,9 @@ int getSize(Node *pointer){
      return count;
 }
 
-/*----------------------------- END DOUBLY LINKEDLIST FUNCTIONS ----------------------*/
+/*----------------------------- DOUBLY LINKEDLIST FUNCTIONS (END) --------------------*/
 /*------------------------------------------------------------------------------------*/
-
+/*------------------------------------------------------------------------------------*/
 /*------------------------------- STUDENT MODULE (START) -----------------------------*/
 
 void	showStudentOptions(int size){
@@ -267,7 +269,7 @@ Student createStudent(){
      s.final_exam = getNumber("Enter score in final exam: ");
      return s;     
 }
-void printStudentList(Node *pointer){
+void printStudentList(StudentNode *pointer){
      int size = getSize(students); 
      int i = 0;
      printf("\n\n\t\t\t\tList of students:");
@@ -374,9 +376,13 @@ void handleStudentMenuInput(){
      }
      SELECTOR = 0;
 }
-
 int computeGrade(Student s){ return (s.quiz + s.attendance + s.hw + s.final_exam); }
 /*-------------------------------- STUDENT MODULE (END) ------------------------------*/
+/*------------------------------------------------------------------------------------*/
+/*-------------------------------- CLASS MODULE (START) ------------------------------*/
+
+/*-------------------------------- CLASS MODULE (END) ------------------------------*/
+/*------------------------------------------------------------------------------------*/
 
 /* State handler */
 void handleState(){
@@ -390,8 +396,8 @@ void handleState(){
 
 /* The main function */
 int main(){
-     students = createNode();
-     searchResults = createNode();
+     students = createStudentNode();
+     searchResults = createStudentNode();
      //load students from file..
      //get last id based from the list of all students loaded
      //set id to last id
