@@ -9,6 +9,7 @@
 #define RIGHT_KEY 77
 #define ENTER_KEY 13
 #define ESC_KEY 27
+#define DEL_KEY 8 
 
 #define STUDENT_MENU_STATE 1
 #define CLASS_MENU_STATE 2
@@ -70,6 +71,7 @@ int cycleInput(int size);
 void displayOptions(char *options[], int start, int end);
 int isNumber(char str[]);
 int getNumber(char *msg);
+void printInCenter(char str[]);
 
 //student module: -----------------------------------------
 void	showStudentOptions(int size);
@@ -92,6 +94,7 @@ void printClassList(ClassNode *pointer);
 void handleAddClass();
 void	showClassOptions(int size);
 void handleClassMenuInput();
+void handleDeleteClass();
 
 //doubly linked list module:-------------------------------
 StudentNode *createStudentNode();
@@ -102,6 +105,7 @@ void deleteStudent(StudentNode *pointer, int id);
 int getSize(StudentNode *pointer);
 Student getStudent(StudentNode *pointer,int id);
 void editStudent(StudentNode *pointer, int id, void* newData, int selector);
+void deleteClass(ClassNode *pointer, int id); 
 
 ClassNode *createClassNode();
 void addClass(ClassNode *pointer, Class data);
@@ -131,19 +135,34 @@ char *getSelectorAndClassID(int id, int class_id){
      }
 }
 
+void printInCenter(char str[]){
+     int i;
+     char space[80];
+     if(strlen(str) < 1){
+          return;
+     }
+     for(i = 0; i < (40 - (strlen(str)/2)); i++){
+          printf(" ");
+     }
+     printf("%s\n", str);
+}
+
 int cycleInput(int size){
 	int INPUT = getch();	
      if(size > 0){
           if(INPUT == UP_KEY)		SELECTOR = (SELECTOR <= 0) ? (size-1) : (SELECTOR - 1); 
           else if(INPUT == DOWN_KEY)	SELECTOR = (SELECTOR + 1) % size; 
-     } else if(INPUT == ESC_KEY) return INPUT;
+          else if(INPUT == ESC_KEY) return INPUT;
+          else if(INPUT == DEL_KEY) return INPUT;
+     }else if(INPUT == ESC_KEY) return INPUT; 
+     else if(INPUT == DEL_KEY) return INPUT;
 	return (INPUT == ENTER_KEY) ? ENTER_KEY : -1;
 }
 
 void displayOptions(char *options[], int start, int end){
      int i = 0;
      for(i = start; i < end; i++){
-          printf("\t\t\t   %s %s\n", getSelector(i), options[i]);
+          printf("\t\t\t      %s %s\n", getSelector(i), options[i]);
      }
 }
 
@@ -297,6 +316,21 @@ Class getClass(ClassNode *pointer, int id){
      }
      return temp;
 }
+void deleteClass(ClassNode *pointer, int id) {
+     while(pointer->next!=NULL && (pointer->next)->data.id != id) {
+          pointer = pointer -> next;
+     }
+     if(pointer->next==NULL) {
+          printf("Class is not present in the list\n");
+          return;
+     }
+     ClassNode *temp;
+     temp = pointer -> next;
+     pointer->next = temp->next;
+     temp->prev =  pointer;
+     free(temp);
+     return;
+}
 int getClassSize(ClassNode *pointer){
      int count = 0;
      while(pointer->next!=NULL) {
@@ -315,8 +349,11 @@ void	showStudentOptions(int size){
      int  start = 0,
           end = size;
 	system("cls");
-     printf("\n\t\t\t\tClass Record\n\n");
-	printf("\t   (Use the arrow keys to navigate and press enter to select)\n\n");
+     printf("\n");
+     printInCenter("Class Record >> Students");
+     printf("\n\n");
+	printInCenter("(Use the arrow keys to navigate and press enter to select)");
+     printf("\n\n");
      displayOptions(STUDENT_MENU, start, end);
 }
 /* Print a student, select_id is for the id of the student in the list */
@@ -325,7 +362,9 @@ void printStudentForTable(Student s, int select_id){
 }
 void printStudent(Student s){
      system("cls");
-     printf("\n\n\t\t\t\tStudent: %s %s\n", s.firstname, s.lastname);
+     printf("\n");
+     printInCenter("Class Record >> Student info");
+     printf("\n\n\tStudent: %s %s\n", s.firstname, s.lastname);
      printf("\n\tFirstname: %s", s.firstname);
      printf("\n\tLastname %s\n", s.lastname);
      printf("\n\t[Scores]\n\tQuizzes: %d", s.quiz);
@@ -333,13 +372,16 @@ void printStudent(Student s){
      printf("\n\tAttendance: %d", s.attendance);
      printf("\n\tFinal exam:  %d\n", s.final_exam);
      printf("\n\tGrade: %d\n\n", s.grade);
+     printInCenter("(Press enter or esc to continue)");
 }
 /* Create a student based from the input of the user. Trap if input is not a number */
 Student createStudent(){
      char input[80];
      Student s; 
      system("cls");
-     printf("\n\t\t\t\tCreate a new student: \n\n");
+     printf("\n"); 
+     printInCenter("Class Record >> Add student");
+     printf("\n\n"); 
      printf("Enter firstname: ");
      gets(s.firstname);
      printf("Enter lastname: ");
@@ -354,10 +396,12 @@ Student createStudent(){
 void printStudentList(StudentNode *pointer){
      int size = getSize(students); 
      int i = 0;
-     printf("\n\n\t\t\t\tList of students:");
+     printf("\n");
+     printInCenter("Class Record >> Student List");
+     printf("\n");
      if(size == 0){
-          printf("\n\t\t\t\tThe list is empty\n");
-          printf("\n\t\t\t    (Press enter to continue)\n");
+          printInCenter("The list is empty");
+          printInCenter("(Press enter or esc to continue)");
      }else{
           while(pointer->next!=NULL) {
                pointer = pointer -> next;
@@ -368,27 +412,37 @@ void printStudentList(StudentNode *pointer){
 void handleAddStudent(){
      Student temp = createStudent(); 
      addStudent(students, temp);
-     printf("\nStudent %s was added to the list. (Press any key to continue)\n", temp.firstname);
+     printf("\nStudent %s was added to the list.\n(Press any key to continue)\n", temp.firstname);
 }
 void handleFindStudent(){
      char input[80];
      system("cls");
-     printf("\n\n\t\t\t\tSearch a student\n");
+     printf("\n");
+     printInCenter("Class Record >> Find Student");
+     printf("\n");
      printf("\nEnter firstname or lastname: ");
      gets(input);
      findStudent(students, input) ;
 
      system("cls");
-     printf("\n\n\t\t\t\tSearch results\n");
+     printf("\n");
+     printInCenter("Class Record >> Search Results");
+     printf("\n\n");
      printf("\nStudents found: %d\n", (getSize(searchResults) > 0 ? getSize(searchResults) : 0));
-     printStudentList(searchResults);
+     if(getSize(searchResults) > 0){
+          printStudentList(searchResults);
+     }
 }
 void showSelectedStudentOptions(){
      Student s = getStudent(students, CURRENT_STUDENT);
      do{
           system("cls");
+          printf("\n");
+          printInCenter("Class Record >> Student Options");
           printf("\n\n\t\t\tStudent: %s %s", s.firstname, s.lastname);
-          printf("\n\n\t\t\tWhat would you like to do?\n\n");
+          printf("\n\n");
+          printInCenter("What would you like to do?");
+          printf("\n");
           displayOptions(SELECT_STUDENT_OPTIONS, 0, 4);
      }while(cycleInput(4) != ENTER_KEY);
 }
@@ -398,7 +452,7 @@ void handleDeleteStudent(){
      gets(in);
      if(strcmp(in, "Y") == 0 || strcmp(in, "y") == 0) {
           deleteStudent(students, CURRENT_STUDENT); 
-          printf("\n\nStudent was removed. (Press any key to continue)");
+          printf("\n\nStudent was removed.\n(Press any key to continue)");
           getch();
      }
      STATE = STUDENT_MENU_STATE;
@@ -410,7 +464,9 @@ void handleEditStudent(){
      SELECTOR = 0;
      do{
           system("cls");
-          printf("\n\n\t\t\tStudent: %s %s", s.firstname, s.lastname);
+          printf("\n");
+          printInCenter("Class Record >> Edit Student");
+          printf("\n\t\t\tStudent: %s %s", s.firstname, s.lastname);
           printf("\n\n\t\t\tWhat data would you like to edit?\n\n");
           displayOptions(EDIT_STUDENT_OPTIONS, 0, size);
      }while(cycleInput(size) != ENTER_KEY);
@@ -467,28 +523,52 @@ int computeGrade(Student s){ return (s.quiz + s.attendance + s.hw + s.final_exam
 void printClassForTable(Class c, int select_id){
      printf("\n\t %s %s", getSelectorAndClassID(select_id, c.id), c.name);
 }
-void handleViewAllClass(){
-     int size = getClassSize(classes); 
-     char n[80];
-     do{  system("cls"); printClassList(classes); }while(cycleInput(getClassSize(classes)) != ENTER_KEY);
-     if(size > 0){
-          students = getClass(classes, CURRENT_CLASS).students;
-          STATE = STUDENT_MENU_STATE;
+void handleDeleteClass(){
+     char in[20];
+     printf("\nAre you sure you want to delete this class? [Y/N]: ");
+     gets(in);
+     if(strcmp(in, "Y") == 0 || strcmp(in, "y") == 0) {
+          deleteClass(classes, CURRENT_CLASS); 
+          printf("\n\nClass was removed.\n(Press any key to continue)");
+          getch();
      }
 }
-
+void handleViewAllClass(){
+     int size = getClassSize(classes); 
+     int in; 
+     do{
+          system("cls");
+          printClassList(classes);
+          in = cycleInput(getClassSize(classes));
+          if(in == ESC_KEY){ break; }
+          if(in == ENTER_KEY) {
+               if(size > 0){
+                    students = getClass(classes, CURRENT_CLASS).students;
+                    if(in != ESC_KEY) STATE = STUDENT_MENU_STATE;
+               }
+          }
+          if(getClassSize(classes) > 0){
+               if(in == DEL_KEY) { handleDeleteClass(); STATE = CLASS_MENU_STATE; break; }
+          }
+     }while(in != ENTER_KEY);
+}
 void printClassList(ClassNode *pointer){
      int size = getClassSize(classes); 
      int i = 0;
-     printf("\n\n\t\t\t\tList of class:");
+     printf("\n");
+     printInCenter("Class Record >> Class List");
+     printf("\n");
      if(size == 0){
-          printf("\n\t\t\t\tThe list is empty\n");
-          printf("\n\t\t\t    (Press enter to continue)\n");
+          printInCenter("The list is empty");
+          printInCenter("(Press enter or esc to continue)");
      }else{
           while(pointer->next!=NULL) {
                pointer = pointer -> next;
                printClassForTable(pointer->data, i++);
           }
+          printf("\n");
+          printInCenter("(Press backspace to delete class)");
+          printInCenter("(Press enter or esc to go back to menu)");
      }
 }
 void handleAddClass(){
@@ -496,21 +576,28 @@ void handleAddClass(){
      Class c;
 
      system("cls");
-     printf("\n\n\t\t\t\tAdd Class\n\n");
-     printf("Classname: ");
-     gets(c.name);
+     printf("\n");
+     printInCenter("Class Record >> Add Class");
+     printf("\n\n");
+     do{
+          printf("Classname: ");
+          gets(c.name);
+     }while(strcmp(c.name, "") == 0);
      c.students = createStudentNode();
      addClass(classes, c);
      
-     printf("\nClass %s was added. (Press enter to continue)", c.name);
+     printf("\nClass %s was added.\n(Press enter to continue)", c.name);
      getch();
 }
 void	showClassOptions(int size){
      int  start = 0,
           end = size;
 	system("cls");
-     printf("\n\t\t\t\tClass Record\n\n");
-	printf("\t   (Use the arrow keys to navigate and press enter to select)\n\n");
+     printf("\n"); 
+     printInCenter("Class Record");
+     printf("\n\n"); 
+	printInCenter("(Use the arrow keys to navigate and press enter to select)");
+     printf("\n\n"); 
      displayOptions(CLASS_MENU, start, end);
 }
 void handleClassMenuInput(){
